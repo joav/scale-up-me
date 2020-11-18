@@ -1,0 +1,52 @@
+Module
+______
+name: string
+slug: string
+isCollection: boolean
+parent: ref
+
+Permision
+_________
+name: string
+module: ref
+
+Role
+____
+name: string
+permisions: ref[]
+
+FieldType
+_________
+name: string
+saveType: string
+
+Field
+_____
+name: string
+slug: string
+fieldType: ref
+module: ref
+dataFrom: ref
+data: string
+
+User
+____
+role: ref
+password: string
+providers: Record<string, string>
+customPermisions: ref[]
+data: Record<string, any>
+createdAt: Date
+modifiedAt: Date
+createdBy: ref
+modifiedBy: ref
+
+Row
+___
+module: ref
+data: Record<string, any>
+createdAt: Date
+modifiedAt: Date
+createdBy: ref
+modifiedBy: ref
+deleted: boolean
