@@ -3,7 +3,7 @@ import { PermisionDocument } from "./Permision";
 import { UserDocument } from "./User";
 
 const schema = new Schema({
-    name: String,
+    name: {type: String, unique: true},
     permisions: [{type: Types.ObjectId, ref: "Permision"}],
     deleted: Boolean,
     createdAt: Date,
@@ -16,7 +16,7 @@ const schema = new Schema({
 
 interface BaseRole {
     name: string;
-    deleted: boolean;
+    deleted?: boolean;
     createdAt?: Date;
     modifiedAt?: Date;
 };
@@ -41,4 +41,4 @@ export interface RoleDocument extends Role, Document {
 
 export interface RoleModel extends Model<RoleDocument> { }
 
-export const Role = model<RoleDocument, RoleModel>('Role', schema);
+export default model<RoleDocument, RoleModel>('Role', schema);

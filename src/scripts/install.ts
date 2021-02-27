@@ -1,14 +1,20 @@
+// DEPS
 import  { config } from "dotenv";
-import db from '../db';
-import { createModule, clearModules, getModuleBySlug } from "../services/ModuleService";
 import yargs from 'yargs';
-import { FieldType as FieldTypeRequest } from "../models/FieldType";
+// Services
+import { createModule, clearModules, getModuleBySlug } from "../services/ModuleService";
 import { clearFieldTypes, createFieldType, getFieldTypeByName } from "../services/FieldTypeService";
 import { clearFields, createField } from "../services/FieldService";
+import { createPermision, clearPermisions, getPermisionBySlug } from "../services/PermisionService";
+import { createRole, clearRoles } from "../services/RoleService";
+// Models
+import { FieldType as FieldTypeRequest } from "../models/FieldType";
 import { RequestField } from "../models/Field";
 import { ModuleDocument } from "../models/Module";
 import { RequestPermision } from "../models/Permision";
-import { createPermision, clearPermisions } from "../services/PermisionService";
+// Utils
+import db from '../db';
+import { clearUsers } from "../services/UserService";
 
 export async function install(clear:boolean) {
     try {
@@ -31,6 +37,12 @@ export async function install(clear:boolean) {
         console.log('To create Base permisions');
         await createBasePermisions().then(console.log);
         console.log('Base permisions created');
+        console.log('To create SUPER-ADMIN Role');
+        await createRole({
+            name: "SUPER-ADMIN",
+            permisions: [(await getPermisionBySlug("unrestricted"))?._id]
+        });
+        console.log('SUPER-ADMIN Role created');
         console.log('To create user module');
         const userModule = await createModule({
             name: "User",
@@ -53,6 +65,8 @@ async function clearAll() {
         clearFieldTypes(),
         clearFields(),
         clearPermisions(),
+        clearRoles(),
+        clearUsers()
     ]);
 }
 
