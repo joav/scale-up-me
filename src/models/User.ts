@@ -1,27 +1,51 @@
-import { Schema, Document, model } from "mongoose";
+import { Schema, Document, model, Types, Model } from "mongoose";
+import { PermisionDocument } from "./Permision";
+import { RoleDocument } from "./Role";
 
-export interface IUser extends Document {
-    role: Schema.Types.ObjectId;
-    password: string;
-    providers: Record<string, string>;
-    customPermisions: Schema.Types.ObjectId[];
-    data: Record<string, string|boolean|number|Date>;
-    createdAt: Date;
-    modifiedAt?: Date;
-    createdBy?: Schema.Types.ObjectId;
-    modifiedBy?: Schema.Types.ObjectId;
-}
-
-const schema = new Schema<IUser>({
-    role: {type: Schema.Types.ObjectId, ref: 'Role'},
+const schema = new Schema({
+    role: {type: Types.ObjectId, ref: 'Role'},
     password: String,
     providers: Object,
-    customPermisions: [{type: Schema.Types.ObjectId, ref: 'Permision'}],
+    customPermisions: [{type: Types.ObjectId, ref: 'Permision'}],
     data: Object,
     createdAt: Date,
     modifiedAt: Date,
-    createdBy: {type: Schema.Types.ObjectId, ref: 'User'},
-    modifiedBy: {type: Schema.Types.ObjectId, ref: 'User'}
+    deleted: Boolean,
+    createdBy: {type: Types.ObjectId, ref: 'User'},
+    modifiedBy: {type: Types.ObjectId, ref: 'User'}
+}, {
+    versionKey: false
 });
 
-export const User = model<IUser>('User', schema);
+interface BaseUser {
+    password: string,
+    providers: Record<string, string>,
+    createdAt?: Date,
+    modifiedAt?: Date,
+    deleted: boolean
+}
+
+export interface RequestUser<T = string | Types.ObjectId> extends BaseUser {
+    role: T,
+    customPermisions: T[],
+    createdBy?: T,
+    modifiedBy?: T
+}
+
+export interface User extends BaseUser {
+    role: Types.ObjectId | Record<string, unknown>,
+    customPermisions: (Types.ObjectId | Record<string, unknown>)[],
+    createdBy?: Types.ObjectId | Record<string, unknown>,
+    modifiedBy?: Types.ObjectId | Record<string, unknown>
+}
+
+export interface UserDocument extends User, Document {
+    role: RoleDocument['_id'],
+    customPermisions: PermisionDocument['_id'][],
+    createdBy?: UserDocument['_id'],
+    modifiedBy?: UserDocument['_id']
+}
+
+export interface UserModel extends Model<UserDocument> { }
+
+export default model<UserDocument, UserModel>('User', schema);

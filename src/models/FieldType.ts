@@ -1,13 +1,20 @@
-import { Schema, Document, model } from "mongoose";
+import { Schema, Document, model, Model } from "mongoose";
 
-export interface IFieldType extends Document {
-    name: string,
-    saveType: "boolean"|"string"|"number"|"date"
-}
-
-const schema = new Schema<IFieldType>({
-    "name": String,
-    "saveType": String
+const schema = new Schema({
+    name: String,
+    saveType: String
+}, {
+    versionKey: false
 });
 
-export const FieldType = model<IFieldType>("FieldType", schema);
+export interface FieldType {
+    name: string,
+    saveType: "boolean"|"string"|"number"|"date"|"rel"|"rel_array"|"obj"
+}
+
+export interface FieldTypeDocument extends FieldType, Document {}
+
+export interface FieldTypeModel extends Model<FieldTypeDocument> {}
+
+
+export default model<FieldTypeDocument, FieldTypeModel>("FieldType", schema);
