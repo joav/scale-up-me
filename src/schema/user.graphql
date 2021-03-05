@@ -1,0 +1,25 @@
+extend type Query {
+  getUser(id: ID!, fields: [String]): User @auth
+  me: User! @auth
+}
+
+extend type Mutation {
+  login(provider: String!, uid: String!, password: String!): Token @guest
+  refresh: Token @auth
+}
+
+type User {
+  _id: ID!
+  role: Role!
+  providers: JSONObject!
+  permisions: [String!]!
+  data: JSONObject
+  createdAt: Date!
+  modifiedAt: Date
+}
+
+type Token {
+  user: User
+  token: String
+  refresh_token: String
+}

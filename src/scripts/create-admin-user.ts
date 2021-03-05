@@ -17,6 +17,8 @@ async function createAdminUser(username: string | undefined, password: string | 
         } catch (error) {
             console.log('error', error);
         }
+    }else{
+        console.log("Not data for create");
     }
     process.exit();
 }

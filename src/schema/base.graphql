@@ -1,0 +1,15 @@
+scalar Date
+scalar JSONObject
+
+directive @auth on FIELD_DEFINITION
+directive @permissions on FIELD_DEFINITION
+directive @guest on FIELD_DEFINITION
+
+type Query {
+  _empty: String
+  helloWorld: String!
+}
+
+type Mutation {
+  _empty: String
+}

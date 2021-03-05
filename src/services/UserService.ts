@@ -1,13 +1,16 @@
 // Dependencies
-import { Types } from "mongoose";
-import { isEmpty, isNil } from "lodash";
+import { DocumentQuery, Types } from "mongoose";
+import { concat, isEmpty, isNil, some, uniqBy } from "lodash";
+import { AuthenticationError, ValidationError } from "apollo-server-errors";
+import { sign, verify } from "jsonwebtoken";
 // Services
 // Models
 import User, { RequestUser, UserDocument } from "../models/User";
 // Utils
-import { encrypt } from "../utils/functions";
+import { comparePasswordHash, encrypt } from "../utils/functions";
 import { exists, empty, minLength, wrongFormat, notFound } from "../utils/messages";
 import { getRoleByName } from "./RoleService";
+import { PermisionDocument } from "../models/Permision";
 
 export async function createUserWithUsername(username: string, password: string, role: string, createdById = "", customPermisions: (string|Types.ObjectId)[] = []) {
     if(isEmpty(username)) throw new Error(empty("username"));
@@ -75,15 +78,79 @@ export async function createUserWithEmail(email: string, password: string, role:
     return await (new User(user)).save();
 }
 
+export async function login(provider: string, uid: string, password?: string) {
+    const user = await findByProvider(provider, uid, true);
+    if(isNil(user)) throw new AuthenticationError("Invalid user data");
+    if(password) {
+        try {
+            await comparePasswordHash(password, user.providers[provider].password);
+        } catch (error) {
+            throw new AuthenticationError("Invalid user data");
+        }
+    }
+    const rolePermisions: PermisionDocument[] = user.role.permisions;
+    let permisions = [];
+    if(some(rolePermisions, p => p.slug === "unrestricted")) permisions.push("unrestricted");
+    else permisions = uniqBy(concat(rolePermisions, user.customPermisions as PermisionDocument[]), p => p._id.toString()).map(p => p.slug || "" );
+    return await refreshToken({
+        id: user._id.toString(),
+        permisions: permisions
+    })
+}
+
+export async function refreshToken(tokenData: {id: string, permisions: string[]}) {
+    const user = await getById(tokenData.id, true);
+    if(isNil(user)) throw new ValidationError(notFound("User"));
+    const token = sign(tokenData, process.env.SECRET || "");
+    const refresh_token = sign(tokenData, process.env.SECRET || "", {
+        expiresIn: "2 days"
+    });
+    return {
+        user,
+        token,
+        refresh_token
+    }
+}
+
 export async function mergeProvider(user: UserDocument, provider: string, data: ({uid: string} & Record<string, string>)) {
     user.providers[provider] = data;
     return user.save();
 }
 
-export async function findByProvider(provider: string, search: string) {
-    return await User.findOne({
-        [`providers.${provider}.uid`]: search
-    });
+export async function findByProvider(provider: string, search: string, populatePermisions = false) {
+    return await populatePermisionsFn(
+        User.findOne({
+            [`providers.${provider}.uid`]: search
+        }, {
+            "providers.username.password": 0,
+            "providers.email.password": 0
+        }),
+        populatePermisions
+    );
+}
+
+export async function getById(id: string, populatePermisions = false) {
+    return await populatePermisionsFn(
+        User.findById(id, {
+            "providers.username.password": 0,
+            "providers.email.password": 0
+        }),
+        populatePermisions
+    );
+}
+
+async function populatePermisionsFn(query: DocumentQuery<UserDocument|null, UserDocument, {}>, populatePermisions = false) {
+    if(populatePermisions) query.populate([
+        {
+            path: 'role',
+            populate: "permisions"
+        },
+        {
+            path: "customPermisions"
+        }
+    ]);
+
+    return await query;
 }
 
 export async function clearUsers() {

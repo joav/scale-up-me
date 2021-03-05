@@ -201,6 +201,10 @@ function createBasePermisions() {
             name: "View Roles",
             slug: "view-role"
         },
+        {
+            name: "Create Modules",
+            slug: "create-module"
+        }
     ] as RequestPermision[]).map(createPermision));
 }
 

@@ -1,0 +1,8 @@
+extend type Query {
+  getRoles: [Role]
+}
+
+type Role {
+  _id: ID!
+  name: String
+}

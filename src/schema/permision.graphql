@@ -1,0 +1,7 @@
+extend type Query {
+    getPermisions: [Permision]
+}
+
+type Permision{
+    _id: String
+}
