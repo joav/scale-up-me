@@ -5,6 +5,7 @@ import { merge } from 'lodash';
 import Role from './resolvers/role.resolver';
 import Permision from './resolvers/permision.resolver';
 import User from './resolvers/user.resolver';
+import Module from './resolvers/module.resolver';
 
 const dateScalar = new GraphQLScalarType({
   name: 'Date',
@@ -32,4 +33,4 @@ const resolverMap: IResolvers = {
   JSONObject: GraphQLJSONObject,
   Date: dateScalar
 };
-export default merge(resolverMap, User, Role, Permision);
+export default merge(resolverMap, User, Role, Permision, Module);

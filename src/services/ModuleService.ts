@@ -1,10 +1,10 @@
 // DEPS
-import { Types } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import { async } from "validate.js";
 import { isNil, isEmpty } from "lodash";
 // Services
 // Models
-import Module, { RequestModule } from "../models/Module";
+import Module, { ModuleDocument, RequestModule } from "../models/Module";
 import User from "../models/User";
 // Utils
 import constraints from "../constraints/ModuleConstraints";
@@ -75,7 +75,37 @@ export async function createModule(body: RequestModule<string|Types.ObjectId>){
 }
 
 export async function getModuleBySlug(slug:string) {
-    return await Module.findOne({ slug });
+    return await Module.findOne({ slug, deleted: false }).populate('parent');
+}
+
+export async function getByParentAndSlugs(parent:Types.ObjectId|null, slugs: string[]) {
+    const search: FilterQuery<ModuleDocument> = {
+        parent: {
+            $in: [parent]
+        },
+        predefined: {
+            $in: [false, null]
+        },
+        deleted: false
+    };
+    if(!isEmpty(slugs)) {
+        search.slug = {
+            $in: slugs
+        }
+    };
+    return await Module.find(search).populate('parent').sort({order: 1});
+}
+
+export async function getParentModules() {
+    return await Module.find({
+        deleted: false,
+        predefined: {
+            $in: [false, null]
+        },
+        isCollection: {
+            $in: [false, null]
+        }
+    }).populate('parent').sort({name: 1});
 }
 
 export async function clearModules() {

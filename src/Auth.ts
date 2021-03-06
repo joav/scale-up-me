@@ -2,6 +2,9 @@
 
 import { AuthenticationError } from "apollo-server-errors";
 import jwt from "jsonwebtoken";
+import { concat, some, uniqBy } from "lodash";
+import { PermisionDocument } from "./models/Permision";
+import { getById } from "./services/UserService";
 
 export interface AuthResponse {
   isAuth: boolean;
@@ -11,7 +14,7 @@ export interface AuthResponse {
   }
 }
 
-export default (request: any) => {
+export default async (request: any) => {
   const header = request.req.headers.authorization;
 
   // not found
@@ -34,8 +37,14 @@ export default (request: any) => {
   // in case any error found
   if (!!!decodeToken) return { isAuth: false };
 
+  const user = await getById(decodeToken.id, true, false);
+  const rolePermisions: PermisionDocument[] = user?.role.permisions;
+  let permisions = [];
+  if(some(rolePermisions, p => p.slug === "unrestricted")) permisions.push("unrestricted");
+  else permisions = uniqBy(concat(rolePermisions, user?.customPermisions as PermisionDocument[]), p => p._id.toString()).map(p => p.slug || "" );
+
   // token decoded successfully, and extracted data
-  return { isAuth: true, user: decodeToken } as AuthResponse;
+  return { isAuth: true, user: {...decodeToken, permisions} } as AuthResponse;
 };
 
 const signedIn = (context: AuthResponse): boolean => context.isAuth

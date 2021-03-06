@@ -1,0 +1,38 @@
+query {
+  me(fields: []) {
+    providers
+    data
+    role {
+      name
+    }
+    providers
+    permisions
+  }
+  getUser(id: "603a7039f29e395670aabfa2", fields: ["lname"]) {
+    data
+  }
+}
+
+mutation {
+  login(provider: "username", uid: "username", password: "password") {
+    user {
+      providers
+      data
+      role {
+        name
+      }
+      providers
+      permisions
+    }
+    token
+    refresh_token
+  }
+}
+
+mutation {
+  createModule(name: "Home", isCollection: false, order: 2) {
+    name
+    slug
+    order
+  }
+}

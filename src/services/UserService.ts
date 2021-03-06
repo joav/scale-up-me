@@ -7,7 +7,7 @@ import { sign, verify } from "jsonwebtoken";
 // Models
 import User, { RequestUser, UserDocument } from "../models/User";
 // Utils
-import { comparePasswordHash, encrypt } from "../utils/functions";
+import { comparePasswordHash, encrypt, selectFields } from "../utils/functions";
 import { exists, empty, minLength, wrongFormat, notFound } from "../utils/messages";
 import { getRoleByName } from "./RoleService";
 import { PermisionDocument } from "../models/Permision";
@@ -79,7 +79,7 @@ export async function createUserWithEmail(email: string, password: string, role:
 }
 
 export async function login(provider: string, uid: string, password?: string) {
-    const user = await findByProvider(provider, uid, true);
+    const user = await findByProvider(provider, uid, true, true);
     if(isNil(user)) throw new AuthenticationError("Invalid user data");
     if(password) {
         try {
@@ -101,7 +101,9 @@ export async function login(provider: string, uid: string, password?: string) {
 export async function refreshToken(tokenData: {id: string, permisions: string[]}) {
     const user = await getById(tokenData.id, true);
     if(isNil(user)) throw new ValidationError(notFound("User"));
-    const token = sign(tokenData, process.env.SECRET || "");
+    const token = sign(tokenData, process.env.SECRET || "", {
+        expiresIn: 3600
+    });
     const refresh_token = sign(tokenData, process.env.SECRET || "", {
         expiresIn: "2 days"
     });
@@ -117,23 +119,25 @@ export async function mergeProvider(user: UserDocument, provider: string, data: 
     return user.save();
 }
 
-export async function findByProvider(provider: string, search: string, populatePermisions = false) {
+export async function findByProvider(provider: string, search: string, populatePermisions = false, showPasswords = false, fields?: string[]) {
     return await populatePermisionsFn(
         User.findOne({
             [`providers.${provider}.uid`]: search
-        }, {
+        }, showPasswords?{}:{
             "providers.username.password": 0,
-            "providers.email.password": 0
+            "providers.email.password": 0,
+            ...(await selectFields('user', fields, true))
         }),
         populatePermisions
     );
 }
 
-export async function getById(id: string, populatePermisions = false) {
+export async function getById(id: string, populatePermisions = false, showPasswords = false, fields?: string[]) {
     return await populatePermisionsFn(
-        User.findById(id, {
+        User.findById(id, showPasswords?{}:{
             "providers.username.password": 0,
-            "providers.email.password": 0
+            "providers.email.password": 0,
+            ...(await selectFields('user', fields, true))
         }),
         populatePermisions
     );

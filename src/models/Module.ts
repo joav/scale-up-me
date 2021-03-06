@@ -22,8 +22,8 @@ interface BaseModule {
     name: string;
     slug?: string;
     order?: number;
-    isCollection: boolean;
-    predefined: boolean;
+    isCollection: boolean|null;
+    predefined: boolean|null;
     deleted?: boolean;
     createdAt?: Date;
     modifiedAt?: Date;

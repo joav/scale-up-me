@@ -1,6 +1,6 @@
 extend type Query {
   getUser(id: ID!, fields: [String]): User @auth
-  me: User! @auth
+  me(fields: [String]): User! @auth
 }
 
 extend type Mutation {

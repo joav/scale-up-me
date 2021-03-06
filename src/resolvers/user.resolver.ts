@@ -1,30 +1,23 @@
 import { IResolverObject, IResolvers } from "apollo-server-express";
-import { concat, omit, some, uniqBy } from "lodash";
+import { concat, some, uniqBy } from "lodash";
 import { AuthResponse } from "../Auth";
 import { PermisionDocument } from "../models/Permision";
-import User, { UserDocument } from "../models/User";
-import { selectFields } from "../utils/functions";
+import { UserDocument } from "../models/User";
 import * as UserService from "../services/UserService";
+import { permisions } from "../decorators";
+
+class Resolvers {
+    @permisions(['view', 'edit'], 'user')
+    static async getUser(_: any, {id, fields}: {id: string, fields?: string[]}, ctx: AuthResponse) {
+        return await UserService.getById(id, true, false, fields);
+    }
+}
 
 export default ({
     Query: {
-        async getUser(_, {id, fields}: {id: string, fields?: string[]}, ctx): Promise<any> {
-            return await User.findById(id, {
-              "providers.username.password": 0,
-              "providers.email.password": 0,
-              ...(await selectFields('user', fields, true))
-            }).populate([
-                {
-                    path: 'role',
-                    populate: "permisions"
-                },
-                {
-                    path: "customPermisions"
-                }
-            ])
-        },
-        async me(_, args: void, ctx) {
-            return UserService.getById(ctx.user.id, true);
+        getUser: Resolvers.getUser,
+        async me(_: any, {fields}: {fields?: string[]}, ctx: AuthResponse) {
+            return UserService.getById(ctx.user.id, true, false, fields);
         }
     } as IResolverObject<any, AuthResponse>,
     Mutation: {

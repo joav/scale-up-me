@@ -4,6 +4,7 @@ import { getModuleBySlug } from "../services/ModuleService";
 import { ValidationError } from "apollo-server-express";
 import { notFound } from "./messages";
 import Field, { FieldDocument } from "../models/Field";
+import { isEmpty } from "lodash";
 
 export async function encrypt(word: string) {
     const salt = await genSalt(10);
@@ -21,7 +22,7 @@ export async function simpleValidatePermisions(permisions: (string | Types.Objec
 }
 
 export async function selectFields(moduleSlug: string, fields?:string[], inverse = false) {
-    if(!fields) return {};
+    if(!fields || isEmpty(fields)) return {};
     const module = await getModuleBySlug(moduleSlug);
     if(!module) throw new ValidationError(notFound(moduleSlug));
     let allFields: FieldDocument[] = [];
